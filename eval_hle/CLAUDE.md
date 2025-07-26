@@ -1,41 +1,9 @@
 # HLE評価システム (eval_hle)
 
 <style>
-details {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  margin: 10px 0;
-  padding: 0;
-}
-
-details summary {
-  background-color: #e9ecef;
-  padding: 12px 16px;
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  font-weight: bold;
-  user-select: none;
-}
-
-details summary:hover {
-  background-color: #dee2e6;
-}
-
-details[open] summary {
-  border-radius: 6px 6px 0 0;
-  margin-bottom: 0;
-}
-
 details > div {
   padding: 16px;
   margin-left: 20px;
-}
-
-details pre {
-  background-color: #f1f3f4;
-  border-left: 4px solid #007bff;
-  margin: 10px 0;
 }
 </style>
 
