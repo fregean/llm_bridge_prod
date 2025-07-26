@@ -88,6 +88,31 @@ vllm serve "$MODEL_PATH" \
   --api-key p10-deepseek-key
 ```
 
+<details>
+<summary><strong>vLLMパラメータ詳細説明</strong></summary>
+<div>
+
+### 並列処理設定
+- **`--tensor-parallel-size 8`**: GPU間でのモデル層分散数。モデルの重みを8つのGPUに分散して並列処理
+- **`--pipeline-parallel-size 2`**: パイプライン並列処理グループ数。モデルを2つのステージに分けて異なるデバイスで順次処理
+- **`--enable-expert-parallel`**: MoE（Mixture of Experts）モデル用の専門家並列化を有効化。DeepSeek-R1の256 expertsを効率的に処理
+
+### 分散実行設定
+- **`--distributed-executor-backend ray`**: 分散実行バックエンド。複数GPU/ノード環境では`ray`、単一ノードでは`mp`（multiprocessing）を使用
+
+### メモリ・処理能力設定
+- **`--gpu-memory-utilization 0.85`**: GPU メモリ使用率（0-1）。デフォルト0.9から0.85に下げて安定性を向上
+- **`--max-model-len 4096`**: モデルコンテキスト長。入力+出力の最大トークン数
+- **`--max-num-seqs 12`**: 1回の反復で処理する最大シーケンス数。同時処理可能なリクエスト数
+- **`--max-num-batched-tokens 6144`**: 1回の反復で処理する最大トークン数。バッチ処理時のトークン上限
+
+### その他
+- **`--trust-remote-code`**: HuggingFaceからの外部コード実行を許可
+- **`--dtype auto`**: モデルの精度を自動選択（通常はbf16/fp16）
+
+</div>
+</details>
+
 **対応するconfig.yaml設定**
 ```yaml
 provider: vllm
@@ -402,6 +427,75 @@ Applied Settings: n=16, temperature=0.8, aggregation=majority_vote"""
 ```
 
 これにより高度な推論手法の追跡・再現・比較が可能になります。
+
+</div>
+</details>
+
+<details>
+<summary><strong>DeepSeek-R1 0528最適化設定</strong></summary>
+<div>
+
+### モデル仕様
+- **パラメータ数**: 671B（6710億パラメータ）
+- **アーキテクチャ**: Mixture of Experts（MoE）with 256 experts
+- **メモリ要件**: 162GB+（量子化版）、715GB（フルモデル）
+- **推奨温度**: 0.5-0.7（0.6推奨）
+
+### 推奨vLLM設定
+
+#### 8GPU構成（80GB VRAM each）
+```bash
+vllm serve "$MODEL_PATH" \
+  --served-model-name deepseek-r1 \
+  --tensor-parallel-size 8 \
+  --enable-expert-parallel \
+  --distributed-executor-backend ray \
+  --trust-remote-code \
+  --dtype auto \
+  --gpu-memory-utilization 0.85 \
+  --max-model-len 32768 \
+  --max-num-seqs 8-12 \
+  --max-num-batched-tokens 4096-6144 \
+  --host 0.0.0.0 --port 8000
+```
+
+#### 16GPU構成（40GB VRAM each）
+```bash
+vllm serve "$MODEL_PATH" \
+  --served-model-name deepseek-r1 \
+  --tensor-parallel-size 8 \
+  --pipeline-parallel-size 2 \
+  --enable-expert-parallel \
+  --distributed-executor-backend ray \
+  --trust-remote-code \
+  --dtype auto \
+  --gpu-memory-utilization 0.85 \
+  --max-model-len 32768 \
+  --max-num-seqs 6-8 \
+  --max-num-batched-tokens 3072-4096 \
+  --host 0.0.0.0 --port 8000
+```
+
+### 安全な初期設定
+メモリ不足を避けるため、以下の保守的な設定から開始することを推奨：
+```bash
+--max-num-seqs 4
+--max-num-batched-tokens 2048
+--gpu-memory-utilization 0.8
+```
+
+その後、GPUメモリ使用量を監視しながら段階的に増加させてください。
+
+### 考慮事項
+1. **KVキャッシュ**: 長い推論（max 38000トークン）でメモリ使用量が大幅増加
+2. **Expert routing**: MoEモデルの特性上、バッチによってメモリ使用量が変動
+3. **Temperature設定**: 0.6推奨で多様性のある生成のため、バッチ効率が低下する可能性
+
+### 参考リンク
+- [DeepSeek-R1 Hardware Requirements](https://huggingface.co/deepseek-ai/DeepSeek-R1/discussions/19)
+- [vLLM DeepSeek-R1 Optimization](https://developers.redhat.com/articles/2025/03/19/how-we-optimized-vllm-deepseek-r1)
+- [DeepSeek-R1 Local Deployment Guide](https://medium.com/@isaakmwangi2018/a-simple-guide-to-deepseek-r1-architecture-training-local-deployment-and-hardware-requirements-300c87991126)
+- [Unsloth DeepSeek-R1 Setup](https://docs.unsloth.ai/basics/deepseek-r1-0528-how-to-run-locally)
 
 </div>
 </details>
