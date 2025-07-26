@@ -1,0 +1,15 @@
+dataset: cais/hle
+
+provider: openai # [openai]
+
+base_url: https://api.deepseek.com
+
+model: deepseek-reasoner
+max_completion_tokens: 38000
+reasoning: true
+
+# Test with 10 samples first
+num_workers: 10
+max_samples: 10
+
+judge: o3-mini-2025-01-31
