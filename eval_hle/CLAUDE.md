@@ -1,12 +1,5 @@
 # HLE評価システム (eval_hle)
 
-<style>
-details > div {
-  padding: 16px;
-  margin-left: 20px;
-}
-</style>
-
 HLE (Humanity's Last Exam) ベンチマークを用いた大規模言語モデルの評価システム
 
 ## フォルダ構成
