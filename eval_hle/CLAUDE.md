@@ -54,90 +54,90 @@ eval_hle/
 <summary><strong>vLLMサーバー設定例</strong></summary>
 <div>
 
-**単一ノード（8 GPU）**
-```bash
-vllm serve "$MODEL_PATH" \
-  --served-model-name deepseek-r1 \
-  --tensor-parallel-size 8 \
-  --enable-expert-parallel \
-  --distributed-executor-backend ray \
-  --trust-remote-code \
-  --dtype auto \
-  --gpu-memory-utilization 0.85 \
-  --max-model-len 4096 \
-  --max-num-seqs 16 \
-  --host 0.0.0.0 --port 8000 \
-  --api-key p10-deepseek-key
-```
+    **単一ノード（8 GPU）**
+    ```bash
+    vllm serve "$MODEL_PATH" \
+      --served-model-name deepseek-r1 \
+      --tensor-parallel-size 8 \
+      --enable-expert-parallel \
+      --distributed-executor-backend ray \
+      --trust-remote-code \
+      --dtype auto \
+      --gpu-memory-utilization 0.85 \
+      --max-model-len 4096 \
+      --max-num-seqs 16 \
+      --host 0.0.0.0 --port 8000 \
+      --api-key p10-deepseek-key
+    ```
 
-**2ノード（16 GPU, 256 experts対応）**
-```bash
-vllm serve "$MODEL_PATH" \
-  --served-model-name deepseek-r1 \
-  --tensor-parallel-size 8 \
-  --pipeline-parallel-size 2 \
-  --enable-expert-parallel \
-  --distributed-executor-backend ray \
-  --trust-remote-code \
-  --dtype auto \
-  --gpu-memory-utilization 0.85 \
-  --max-model-len 4096 \
-  --max-num-seqs 12 \
-  --max-num-batched-tokens 6144 \
-  --host 0.0.0.0 --port 8000 \
-  --api-key p10-deepseek-key
-```
+    **2ノード（16 GPU, 256 experts対応）**
+    ```bash
+    vllm serve "$MODEL_PATH" \
+      --served-model-name deepseek-r1 \
+      --tensor-parallel-size 8 \
+      --pipeline-parallel-size 2 \
+      --enable-expert-parallel \
+      --distributed-executor-backend ray \
+      --trust-remote-code \
+      --dtype auto \
+      --gpu-memory-utilization 0.85 \
+      --max-model-len 4096 \
+      --max-num-seqs 12 \
+      --max-num-batched-tokens 6144 \
+      --host 0.0.0.0 --port 8000 \
+      --api-key p10-deepseek-key
+    ```
 
-**対応するconfig.yaml設定**
-```yaml
-provider: vllm
-base_url: http://compute-node:8000/v1
-model: deepseek-r1
-api_key: p10-deepseek-key
-max_completion_tokens: 38000
-reasoning: true
-num_workers: 2500
-max_samples: 2500
-```
+    **対応するconfig.yaml設定**
+    ```yaml
+    provider: vllm
+    base_url: http://compute-node:8000/v1
+    model: deepseek-r1
+    api_key: p10-deepseek-key
+    max_completion_tokens: 38000
+    reasoning: true
+    num_workers: 2500
+    max_samples: 2500
+    ```
 
-**クライアント側の実装**
-```python
-# vllm_predictions.py内の設定
-def main(args: Config):
-    global client
-    client = AsyncOpenAI(
-        base_url=args.base_url,      # "http://compute-node:8000/v1"
-        api_key=args.api_key,        # "p10-deepseek-key"
-        timeout=86400,
-        max_retries=3,
+    **クライアント側の実装**
+    ```python
+    # vllm_predictions.py内の設定
+    def main(args: Config):
+        global client
+        client = AsyncOpenAI(
+            base_url=args.base_url,      # "http://compute-node:8000/v1"
+            api_key=args.api_key,        # "p10-deepseek-key"
+            timeout=86400,
+            max_retries=3,
+        )
+
+    # API呼び出し（基本）
+    response = await client.chat.completions.create(
+        model=args.model,                # "deepseek-r1"
+        messages=messages,
+        max_completion_tokens=args.max_completion_tokens,
+        stream=False,
     )
 
-# API呼び出し（基本）
-response = await client.chat.completions.create(
-    model=args.model,                # "deepseek-r1"
-    messages=messages,
-    max_completion_tokens=args.max_completion_tokens,
-    stream=False,
-)
+    # API呼び出し（多数サンプリング時）
+    response = await client.chat.completions.create(
+        model=args.model,                # "deepseek-r1"
+        messages=messages,
+        n=16,                           # 16回サンプリング
+        temperature=0.8,                # 温度設定
+        max_completion_tokens=args.max_completion_tokens,
+        stream=False,
+    )
 
-# API呼び出し（多数サンプリング時）
-response = await client.chat.completions.create(
-    model=args.model,                # "deepseek-r1"
-    messages=messages,
-    n=16,                           # 16回サンプリング
-    temperature=0.8,                # 温度設定
-    max_completion_tokens=args.max_completion_tokens,
-    stream=False,
-)
-
-# 16サンプルの処理
-if args.n_samples and args.n_samples > 1:
-    choices = [choice.message.content for choice in response.choices]
-    # 集約処理（majority vote, self-consistency等）
-    final_content = aggregate_responses(choices)
-else:
-    final_content = response.choices[0].message.content
-```
+    # 16サンプルの処理
+    if args.n_samples and args.n_samples > 1:
+        choices = [choice.message.content for choice in response.choices]
+        # 集約処理（majority vote, self-consistency等）
+        final_content = aggregate_responses(choices)
+    else:
+        final_content = response.choices[0].message.content
+    ```
 
 </div>
 </details>
