@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional, List
 
 @dataclass
 class Config:
@@ -11,3 +12,8 @@ class Config:
     num_workers: int
     max_samples: int
     judge: str
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    n_samples: Optional[int] = None
+    question_indices: Optional[List[int]] = None
+    question_range: Optional[List[int]] = None
