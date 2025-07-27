@@ -33,6 +33,9 @@ from openai import AsyncOpenAI
 from tqdm.asyncio import tqdm_asyncio
 from datasets import load_dataset
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = AsyncOpenAI(
     timeout=300.0,
