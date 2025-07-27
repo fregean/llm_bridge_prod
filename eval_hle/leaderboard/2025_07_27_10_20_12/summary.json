@@ -1,0 +1,16 @@
+{
+    "model_name": "dummy_model",
+    "overall_accuracy": 0.0,
+    "accuracy_per_category": {
+        "Math": 0.0,
+        "Physics": null,
+        "Biology/Medicine": null,
+        "Humanities/Social Science": null,
+        "Computer Science/AI": null,
+        "Engineering": null,
+        "Chemistry": null,
+        "Other": null
+    },
+    "num_questions": 2,
+    "timestamp": "2025-07-27T10:20:12.813182"
+}
