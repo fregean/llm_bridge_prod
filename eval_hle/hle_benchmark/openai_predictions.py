@@ -27,16 +27,67 @@ import asyncio
 from datasets import load_dataset
 from openai import AsyncOpenAI
 from tqdm.asyncio import tqdm_asyncio
+from dotenv import load_dotenv
+import re
+from collections import Counter
 
-client = AsyncOpenAI(
-    timeout=600.0,
-    max_retries=1,
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
+load_dotenv()
+
+client = None
 
 SYSTEM_EXACT_ANSWER = "Your response should be in the following format:\nExplanation: {your explanation for your final answer}\nExact Answer: {your succinct, final answer}\nConfidence: {your confidence score between 0% and 100% for your answer}"
 
 SYSTEM_MC = "Your response should be in the following format:\nExplanation: {your explanation for your answer choice}\nAnswer: {your chosen answer}\nConfidence: {your confidence score between 0% and 100% for your answer}"
+
+
+def extract_final_answer(response_text):
+    """Extract the final answer from response text for aggregation"""
+    # For exact_match questions
+    exact_match = re.search(r'Exact Answer:\s*(.+?)(?:\n|$)', response_text, re.IGNORECASE)
+    if exact_match:
+        return exact_match.group(1).strip()
+    
+    # For multiple choice questions
+    mc_match = re.search(r'Answer:\s*(.+?)(?:\n|$)', response_text, re.IGNORECASE)
+    if mc_match:
+        return mc_match.group(1).strip()
+    
+    # Fallback: return the last line if no pattern matches
+    lines = response_text.strip().split('\n')
+    return lines[-1].strip() if lines else ""
+
+
+def aggregate_responses(responses):
+    """Aggregate multiple responses using majority voting"""
+    if not responses:
+        return None
+    
+    # If only one response, return it
+    if len(responses) == 1:
+        return responses[0]
+    
+    # Extract final answers from all responses
+    final_answers = []
+    for response in responses:
+        if response:
+            answer = extract_final_answer(response)
+            if answer:
+                final_answers.append(answer)
+    
+    if not final_answers:
+        return responses[0]  # Fallback to first response
+    
+    # Count occurrences and find majority
+    answer_counts = Counter(final_answers)
+    most_common_answer = answer_counts.most_common(1)[0][0]
+    
+    # Find the first response that contains the majority answer
+    for response in responses:
+        if response and most_common_answer in extract_final_answer(response):
+            return response
+    
+    # Fallback to first response
+    return responses[0]
 
 
 def format_message(args, question):
@@ -62,23 +113,44 @@ def format_message(args, question):
 async def attempt_question(args, question):
     messages = format_message(args, question)
     try:
-        response = await client.chat.completions.create(
-            model=args.model,
-            # temperature=args.temperature if "o1" not in args.model else None,
-            max_completion_tokens=args.max_completion_tokens,
-            messages=messages,
-            stream=False,
-        ) 
-        content = response.choices[0].message.content
+        # Build API parameters
+        api_params = {
+            "model": args.model,
+            "max_completion_tokens": args.max_completion_tokens,
+            "messages": messages,
+            "stream": False,
+        }
+        
+        # Add temperature if specified and not o1 model
+        if hasattr(args, 'temperature') and args.temperature is not None and "o1" not in args.model:
+            api_params["temperature"] = args.temperature
+        
+        # Add top_p if specified
+        if hasattr(args, 'top_p') and args.top_p is not None:
+            api_params["top_p"] = args.top_p
+        
+        # Add n_samples if specified and > 1
+        if hasattr(args, 'n_samples') and args.n_samples is not None and args.n_samples > 1:
+            api_params["n"] = args.n_samples
+        
+        response = await client.chat.completions.create(**api_params)
+        
+        # Handle multiple samples
+        if hasattr(args, 'n_samples') and args.n_samples is not None and args.n_samples > 1:
+            choices = [choice.message.content for choice in response.choices]
+            final_content = aggregate_responses(choices)
+        else:
+            final_content = response.choices[0].message.content
+        
         tokens = json.loads(response.usage.model_dump_json())
     except Exception as e:
         print("Error:", e)
         return None
     
-    if content is None: # failed
+    if final_content is None: # failed
         return None
     
-    return question["id"], content, tokens
+    return question["id"], final_content, tokens
 
 
 async def attempt_all(args, questions):
@@ -95,6 +167,23 @@ async def attempt_all(args, questions):
 
     
 def main(args):
+    global client
+    
+    # Initialize client based on base_url
+    if hasattr(args, 'base_url') and args.base_url == "https://api.deepseek.com":
+        client = AsyncOpenAI(
+            base_url=args.base_url,
+            api_key=os.environ.get("DEEPSEEK_API_KEY"),
+            timeout=600.0,
+            max_retries=1,
+        )
+    else:
+        client = AsyncOpenAI(
+            timeout=600.0,
+            max_retries=1,
+            api_key=os.environ.get("OPENAI_API_KEY"),
+        )
+    
     assert args.num_workers > 1, "num_workers must be 2 or greater"
     dataset = load_dataset(args.dataset, split="test")
     dataset = dataset.filter(lambda item: item['image'] == "")
@@ -103,9 +192,20 @@ def main(args):
     # convert to list of json for async parallelism
     questions = [dict(zip(dataset.keys(), values)) for values in zip(*dataset.values())]
     
-    # If max_samples is set, limit the number of questions
-    if args.max_samples:
+    # Question selection with priority: indices > range > max_samples
+    if hasattr(args, 'question_indices') and args.question_indices:
+        # Select specific indices
+        questions = [questions[i] for i in args.question_indices if i < len(questions)]
+        print(f"Selected {len(questions)} questions by indices: {args.question_indices}")
+    elif hasattr(args, 'question_range') and args.question_range and len(args.question_range) == 2:
+        # Select range
+        start, end = args.question_range
+        questions = questions[start:end]
+        print(f"Selected questions from index {start} to {end} ({len(questions)} questions)")
+    elif args.max_samples:
+        # Default: select first N questions
         questions = questions[:args.max_samples]
+        print(f"Selected first {len(questions)} questions (max_samples: {args.max_samples})")
     
     output_filepath = f"predictions/hle_{os.path.basename(args.model)}.json"   
 

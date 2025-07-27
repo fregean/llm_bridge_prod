@@ -1,6 +1,6 @@
 import hydra
 
-@hydra.main(config_name="config", version_base=None, config_path="conf")
+@hydra.main(config_name="config_deepseek_api", version_base=None, config_path="conf")
 def main(cfg):
     if cfg.provider == "openai":
         from hle_benchmark import openai_predictions
