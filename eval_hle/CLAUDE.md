@@ -150,7 +150,7 @@ response = await client.chat.completions.create(
     model=args.model,                # "deepseek-r1"
     messages=messages,
     n=16,                           # 16回サンプリング
-    temperature=0.8,                # 温度設定
+    temperature=0.6,                # 温度設定
     max_completion_tokens=args.max_completion_tokens,
     stream=False,
 )
@@ -222,6 +222,8 @@ Confidence: {your confidence score between 0% and 100% for your answer}
   2. 正解との照合
   3. 信頼度スコア抽出
   4. キャリブレーション誤差計算
+
+**重要**: `calib_err`関数は**サンプル数が100問未満の場合は0.0を返す**仕様のため、`Calibration Error: 0.0`が表示されます。正確な評価には最低100問が必要です。
 
 ### 4. 評価結果の出力形式
 
@@ -315,6 +317,35 @@ python judge.py
 - **leaderboard/**: 最終評価結果（JSONL + サマリー）
 
 評価結果は`leaderboard/`内のタイムスタンプ付きフォルダに保存され、リーダーボード統合用の標準形式で出力されます。
+
+<details>
+<summary><strong>JSONL→CSV変換ツール（オプション）</strong></summary>
+<div>
+
+`convert_jsonl_to_csv.py`スクリプトを使用して、results.jsonlファイルをCSV形式に変換できます。
+
+**使用方法:**
+```bash
+# 基本使用法（出力ファイル名は自動生成: results.jsonl → results.csv）
+python convert_jsonl_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl
+
+# 出力ファイル名を指定
+python convert_jsonl_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl my_results.csv
+
+# 全フォルダを一括変換
+for folder in leaderboard/*/; do python convert_jsonl_to_csv.py "${folder}results.jsonl"; done
+```
+
+**変換される項目:**
+`id,category,question,user_prompt,answer_type,prediction,gold,correct,judgement`
+
+**特徴:**
+- UTF-8エンコーディング対応
+- エラーハンドリング（無効なJSON行をスキップ）
+- 進行状況と結果の表示
+
+</div>
+</details>
 
 <details>
 <summary><strong>Leaderboard形式変換</strong></summary>
