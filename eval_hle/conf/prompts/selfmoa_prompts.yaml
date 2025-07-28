@@ -1,0 +1,42 @@
+# This file contains prompts for the Self=MoA evaluation framework.
+
+aggregator_prompt_template: |
+  You are an expert aggregator. You have been provided with several responses to a single question from different reasoning paths. Your task is to synthesize these responses to produce a final, high-quality answer.
+
+  The original question was:
+  ---
+  {original_question}
+  ---
+
+  Here are the {num_responses} responses you need to aggregate:
+  ---
+  {all_responses}
+  ---
+
+  Based on all the provided explanations, determine the best final answer. Your own response must follow the specified format.
+
+exact_answer_variations:
+  # 狙い：基礎に立ち返り、前提から論理を組み立てる思考を促す
+  - "First, break the problem down to its first principles. Then, provide your response in the specified format:\nExplanation: {your explanation...}\nExact Answer: {your final answer}..."
+  
+  # 狙い：批判的思考を促す。間違いやすい点や反例を先に考えさせる
+  - "Before answering, consider potential pitfalls or common mistakes related to this question. Based on that, provide your response in the format:\nExplanation: {your explanation...}\nExact Answer: {your final answer}..."
+  
+  # 狙い：比喩や類推を用いた、異なる角度からの思考を促す
+  - "Is there a simpler analogy that helps solve this? Use it to build your reasoning and provide your response in the format:\nExplanation: {your explanation...}\nExact Answer: {your final answer}..."
+  
+  # 狙い：一度出した答えを再検証する、二重チェックのプロセスを促す
+  - "Provide your answer in the following format. After providing the answer, briefly add a section explaining how you double-checked your work.\nExplanation: {your explanation...}\nExact Answer: {your final answer}..."
+
+mc_variations:
+  # 狙い：正解を選ぶだけでなく、他の選択肢がなぜ違うのかを明確にさせる（消去法）
+  - "For each incorrect option, briefly explain why it's wrong. Then, explain why your chosen answer is correct, using the specified format:\nExplanation: {your explanation...}\nAnswer: {your chosen answer}..."
+
+  # 狙い：最も可能性の高い選択肢から検討する思考を促す
+  - "Analyze which answer choice is the most plausible and build your reasoning from there. Provide your response in the format:\nExplanation: {your explanation...}\nAnswer: {your chosen answer}..."
+
+  # 狙い：最もあり得ない選択肢から除外していく思考を促す
+  - "Start by identifying the least likely answer choice and explain why it can be eliminated. Continue this process and provide your final response in the format:\nExplanation: {your explanation...}\nAnswer: {your chosen answer}..."
+
+  # 狙い：質問の主題や核となる概念が何かを定義させてから回答させる
+  - "First, define the core concept being tested in the question. Based on that definition, provide your response in the format:\nExplanation: {your explanation...}\nAnswer: {your chosen answer}..."

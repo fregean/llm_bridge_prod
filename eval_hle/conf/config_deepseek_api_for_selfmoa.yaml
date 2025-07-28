@@ -1,0 +1,27 @@
+defaults:
+  - _self_
+  - prompts: selfmoa_prompts
+
+dataset: cais/hle
+
+provider: openai # [openai]
+base_url: https://api.deepseek.com
+
+model: deepseek-reasoner
+max_completion_tokens: 32768
+reasoning: true
+
+# DeepSeek official recommended parameters
+temperature: 0.6
+top_p: 0.95
+n_samples: 4
+
+# Test with 10 samples first
+num_workers: 10
+max_samples: 50
+
+# Flexible question selection (optional)
+question_indices: [40, 436, 575, 1305, 1122, 2060, 2099, 2153, 2149, 549, 551, 142, 1619, 831, 794, 572, 253, 1467, 1730, 403, 834, 739, 242, 102, 769, 2104, 1047, 622, 112, 1553, 2114, 753, 1709, 1889, 1337, 1327, 2107, 1757, 2140, 63, 35, 1699, 2134, 2125, 2152, 836, 1145, 1392]
+# question_range: [100, 150]            # Select range (100-150)
+
+judge: o3-mini-2025-01-31
