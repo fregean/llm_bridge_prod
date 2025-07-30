@@ -351,6 +351,60 @@ python predict.py
 ```
 
 ### 4. 評価実行
+
+<details>
+<summary><strong>vLLMサーバーでの推論・評価手順</strong></summary>
+<div>
+
+### 必要ファイル構成
+
+```
+eval_hle/
+├── hle_benchmark/
+│   ├── vllm_predictions.py           # vLLMサーバー経由でモデル推論を実行
+│   └── run_judge_results.py          # 予測結果の正誤判定と評価指標計算
+├── conf/
+│   └── config_judge_openrouter_api.yaml  # OpenRouter Judge API設定ファイル
+├── predict_on_vllm.py                # vLLM推論メインスクリプト
+└── judge_with_openrouter.py          # OpenRouter Judge評価メインスクリプト
+```
+
+### 1. vLLM推論実行
+```bash
+# vLLMサーバー経由でモデル推論を実行
+python predict_on_vllm.py
+```
+
+### 2. OpenRouter Judge評価
+```bash
+# 環境変数設定
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+
+# OpenRouter経由で評価実行
+python judge_with_openrouter.py
+```
+
+### 設定ファイル例
+**conf/config_judge_openrouter_api.yaml**
+```yaml
+dataset: cais/hle
+provider: vllm
+base_url: http://192.168.11.78:8000/v1
+model: deepseek-r1
+max_completion_tokens: 38000
+reasoning: true
+num_workers: 2500
+max_samples: 2500
+judge: meta-llama/llama-3.1-8b-instruct:free  # OpenRouter無料モデル
+```
+
+### 利点
+- **専用スクリプト**: vLLM推論と評価が分離された専用スクリプト
+- **コスト削減**: OpenRouterの無料judgeモデル利用
+- **柔軟性**: 異なる設定ファイルでの評価パラメータ調整が容易
+
+</div>
+</details>
 ```bash
 export OPENAI_API_KEY="your_api_key"
 python judge.py
@@ -526,18 +580,24 @@ vllm serve "$MODEL_PATH" \
   --served-model-name deepseek-r1 \
   --tensor-parallel-size 8 \
   --enable-expert-parallel \
-  --distributed-executor-backend ray \
   --trust-remote-code \
   --dtype auto \
-  --gpu-memory-utilization 0.85 \
-  --max-model-len 32768 \
-  --max-num-seqs 8-12 \
-  --max-num-batched-tokens 4096-6144 \
-  --host 0.0.0.0 --port 8000
+  --gpu-memory-utilization 0.90 \
+  --max-model-len 8192 \
+  --max-num-seqs 12 \
+  --max-num-batched-tokens 4096 \
+  --host 0.0.0.0 --port 8000 \
+  --api-key p10-deepseek-key \
+  --kv-cache-dtype fp8 \
+  --swap-space 64
+
+# --distributed-executor-backend ray は単一ノードの場合、通常は不要
 ```
 
 #### 16GPU構成（40GB VRAM each）
 ```bash
+# deepseek_memory_optimized_server_v2.sh のvllm serve部分を書き換える
+
 vllm serve "$MODEL_PATH" \
   --served-model-name deepseek-r1 \
   --tensor-parallel-size 8 \
@@ -546,12 +606,20 @@ vllm serve "$MODEL_PATH" \
   --distributed-executor-backend ray \
   --trust-remote-code \
   --dtype auto \
-  --gpu-memory-utilization 0.85 \
-  --max-model-len 32768 \
-  --max-num-seqs 6-8 \
-  --max-num-batched-tokens 3072-4096 \
-  --host 0.0.0.0 --port 8000
+  --gpu-memory-utilization 0.90 \
+  --max-model-len 8192 \
+  --max-num-seqs 8 \
+  --max-num-batched-tokens 4096 \
+  --host 0.0.0.0 --port 8000 \
+  --api-key p10-deepseek-key \
+  --enforce-eager \
+  --disable-log-requests \
+  --kv-cache-dtype fp8 \
+  --swap-space 64
+
+# --kv-cache-dtype fp8と--swap-space 64はメモリ削減オプション
 ```
+
 
 ### 安全な初期設定
 メモリ不足を避けるため、以下の保守的な設定から開始することを推奨：
