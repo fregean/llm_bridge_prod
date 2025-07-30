@@ -124,7 +124,7 @@ async def attempt_all(args, questions):
                 
                 api_params = {
                     "model": args.model,
-                    "max_completion_tokens": args.max_completion_tokens,
+                    "max_tokens": args.max_completion_tokens,
                     "messages": messages,
                     "stream": False,
                 }
