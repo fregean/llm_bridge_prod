@@ -410,6 +410,107 @@ export OPENAI_API_KEY="your_api_key"
 python judge.py
 ```
 
+<details>
+<summary><strong>5段階ルーブリック評価システム</strong></summary>
+<div>
+
+### 概要
+予測結果を`utils/evaluation_rubric.yaml`の5段階ルーブリックを用いて、OpenAI o3-miniで詳細評価するシステム。
+
+### 必要ファイル構成
+```
+eval_hle/
+├── hle_benchmark/
+│   └── rubric_evaluation.py         # ルーブリック評価エンジン
+├── utils/
+│   └── evaluation_rubric.yaml       # 5段階評価基準
+├── conf/
+│   └── config_rubric_evaluation.yaml # 評価設定ファイル
+├── rubric_evaluate.py               # メインスクリプト
+└── predictions/
+    └── hle_deepseek-reasoner.json   # 評価対象の予測結果
+```
+
+### 使用方法
+
+#### 2. CLI実行（推奨）
+```bash
+# 基本実行（モデル名から自動でファイルパス決定）
+python rubric_evaluate.py --model deepseek-reasoner --num-workers 2
+
+# judge モデル指定
+python rubric_evaluate.py --model deepseek-reasoner --judge o3-mini-2025-01-31 --num-workers 5
+
+# カスタムファイルパス指定
+python rubric_evaluate.py --predictions-file predictions/custom_predictions.json --num-workers 2
+
+# 絶対パス指定も可能
+python rubric_evaluate.py --predictions-file /path/to/my_predictions.json --judge o3-mini-2025-01-31 --num-workers 3
+```
+
+#### 3. 設定ファイル使用
+```bash
+python rubric_evaluate.py --config conf/config_rubric_evaluation.yaml
+```
+
+### 評価プロセス
+1. **データ紐付け**: `predictions/hle_{model}.json` と cais/hle データセットをIDで紐付け
+2. **ルーブリック適用**: 5段階評価基準（1=Inappropriate 〜 5=Completely Valid）を適用
+3. **詳細評価**: OpenAI o3-miniが以下を評価
+   - **score**: 1-5の総合評価
+   - **reasoning**: 詳細な評価理由（200-400語）
+   - **category_assessment**: 分野別評価（50-100語）
+   - **logical_consistency**: 論理的一貫性（50-100語）
+   - **factual_accuracy**: 事実正確性（50-100語）
+
+### 出力ファイル
+- **`rubric_evaluated/rubric_hle_{model}.json`**: 詳細評価結果
+- **`rubric_evaluated/rubric_stats_{model}.json`**: 統計サマリー
+
+### 統計情報例
+```json
+{
+  "total_evaluations": 46,
+  "average_score": 2.3,
+  "median_score": 2,
+  "score_distribution": {
+    "1": 8,
+    "2": 15,
+    "3": 12,
+    "4": 7,
+    "5": 4
+  },
+  "std_deviation": 1.2
+}
+```
+
+### 設定ファイル例
+**conf/config_rubric_evaluation.yaml**
+```yaml
+model: deepseek-reasoner
+predictions_file: null  # null=自動決定、カスタムパス指定も可能
+judge: o3-mini-2025-01-31
+num_workers: 5
+max_completion_tokens: 2048
+max_samples: 0  # 0=全件、数値指定でテスト用制限
+```
+
+**カスタムファイル指定例**
+```yaml
+model: my-model
+predictions_file: "custom_predictions/my_model_results.json"
+judge: o3-mini-2025-01-31
+num_workers: 3
+```
+
+### 利点
+- **詳細評価**: 単純な正誤だけでなく、論理性・正確性を多角的に評価
+- **再現性**: 構造化されたルーブリックによる一貫した評価基準
+- **分析性**: カテゴリ別・スコア別の詳細な統計分析が可能
+
+</div>
+</details>
+
 ## 出力ファイル説明
 
 - **predictions/**: モデルの生回答（JSON形式）
