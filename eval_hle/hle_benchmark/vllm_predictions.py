@@ -60,8 +60,10 @@ async def attempt_question(args, question):
     try:
         response = await client.chat.completions.create(
             model=args.model,
-            # temperature=args.temperature if "o1" not in args.model else None,
-            max_completion_tokens=args.max_completion_tokens,
+            n=args.n_samples,
+            temperature=args.temperature #if "o1" not in args.model else None,
+            max_tokens=args.max_completion_tokens,
+            top_p=args.top_p,
             messages=messages,
             stream=False,
         ) 
@@ -99,7 +101,7 @@ def main(args: Config):
         base_url=args.base_url,
         timeout=86400,
         max_retries=3,
-        api_key="fakeapikey",
+        api_key="p10-deepseek-key" # vLLMサーバで設定したAPIキー
     )
 
     assert args.num_workers > 1, "num_workers must be 2 or greater"
@@ -111,8 +113,21 @@ def main(args: Config):
     questions = [dict(zip(dataset.keys(), values)) for values in zip(*dataset.values())]
     
     # If max_samples is set, limit the number of questions
-    if args.max_samples:
+    # if args.max_samples:
+    #     questions = questions[:args.max_samples]
+    if hasattr(args, 'question_indices') and args.question_indices:
+        # Select specific indices
+        questions = [questions[i] for i in args.question_indices if i < len(questions)]
+        print(f"Selected {len(questions)} questions by indices: {args.question_indices}")
+    elif hasattr(args, 'question_range') and args.question_range and len(args.question_range) == 2:
+        # Select range
+        start, end = args.question_range
+        questions = questions[start:end]
+        print(f"Selected questions from index {start} to {end} ({len(questions)} questions)")
+    elif args.max_samples:
+        # Default: select first N questions
         questions = questions[:args.max_samples]
+        print(f"Selected first {len(questions)} questions (max_samples: {args.max_samples})")
     
     output_filepath = f"predictions/hle_{os.path.basename(args.model)}.json"   
 
