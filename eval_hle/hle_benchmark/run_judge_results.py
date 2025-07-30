@@ -37,10 +37,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# client = AsyncOpenAI(
+#     timeout=300.0,
+#     max_retries=1,
+#     api_key=os.environ.get("OPENAI_API_KEY"),
+# )
+
 client = AsyncOpenAI(
+    # OpenRouterのAPIエンドポイントを指定
+    base_url="https://openrouter.ai/api/v1",  #
+    api_key=os.environ.get("OPENROUTER_API_KEY"), 
+    # OpenRouterが推奨するヘッダーを設定すると、ダッシュボードで利用状況を追跡可能
+    default_headers={
+        "HTTP-Referer": "https://github.com/fregean/llm_bridge_prod",
+        "X-Title": "HLE Benchmark Judge"
+    },
     timeout=300.0,
     max_retries=1,
-    api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
 JUDGE_PROMPT = """Judge whether the following [response] to [question] is correct or not based on the precise and unambiguous [correct_answer] below.
