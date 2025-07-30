@@ -15,8 +15,8 @@ temperature: 0.6
 top_p: 0.95
 
 # sample with multimodal is 2500, so text-only sample is about 2400
-num_workers: 10
+num_workers: 5
 # max_samples: 20
-question_indices: [2114, 753, 1709, 1889, 1337, 1327]
+question_indices: [2114, 753, 1709, 1889, 1337, 1327] # 数学のみ
 
 judge: meta-llama/llama-3.1-8b-instruct:free
