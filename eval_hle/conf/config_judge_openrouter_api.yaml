@@ -1,0 +1,22 @@
+dataset: cais/hle
+
+provider: vllm # [vllm]
+
+# base_url: http://localhost:8000/v1
+# vLLMヘッドノードのIPアドレス
+base_url: http://192.168.11.78:8000/v1
+
+# model: deepseek/deepseek-r1-0528:free
+model: deepseek-r1
+max_completion_tokens: 38000
+reasoning: true
+n_samples: 5
+temperature: 0.6
+top_p: 0.95
+
+# sample with multimodal is 2500, so text-only sample is about 2400
+num_workers: 10
+# max_samples: 20
+question_indices: [2114, 753, 1709, 1889, 1337, 1327]
+
+judge: meta-llama/llama-3.1-8b-instruct:free
