@@ -215,6 +215,52 @@ Confidence: {your confidence score between 0% and 100% for your answer}
   ```
 - **評価者**: `conf/config.yaml`の`judge`パラメータで指定
 
+<details>
+<summary><strong>OpenRouter Judge API設定</strong></summary>
+<div>
+
+### 利用可能なJudgeモデル
+
+OpenRouter経由で以下のホワイトモデル（無料）が候補：
+
+- **meta-llama/llama-3.1-8b-instruct:free**
+
+### 設定方法
+
+#### 1. 環境変数設定
+```bash
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+```
+
+#### 2. config.yaml設定
+```yaml
+judge: meta-llama/llama-3.1-8b-instruct:free  # または mistral-large-2:free
+```
+
+#### 3. API設定詳細
+`hle_benchmark/run_judge_results.py`にて以下の設定が適用されます：
+
+```python
+client = AsyncOpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ.get("OPENROUTER_API_KEY"), 
+    default_headers={
+        "HTTP-Referer": "https://github.com/fregean/llm_bridge_prod",
+        "X-Title": "HLE Benchmark Judge"
+    },
+    timeout=300.0,
+    max_retries=1,
+)
+```
+
+### 利点
+- **コスト削減**: 無料モデル利用による評価コスト削減
+- **利用状況追跡**: OpenRouterダッシュボードでの詳細な利用統計
+- **モデル選択**: 複数のjudgeモデルでの評価品質比較が可能
+
+</div>
+</details>
+
 #### `hle_benchmark/run_judge_results.py`
 - **機能**: 予測結果の正誤判定と評価指標計算
 - **評価プロセス**:
