@@ -3,9 +3,9 @@
 Convert results.jsonl from HLE evaluation to CSV format.
 
 Usage:
-    python convert_jsonl_to_csv.py <input_jsonl_file> [output_csv_file]
-    
-    If output_csv_file is not specified, it will be auto-generated based on input filename.
+   python convert_jsonl_to_csv.py <input_jsonl_file> [output_csv_file]
+
+   output_csv_fileが指定されない場合、入力ファイル名と同じディレクトリに自動生成されます。
 """
 
 import json
@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 
 def convert_jsonl_to_csv(input_file, output_file=None):
-    """Convert JSONL file to CSV format."""
     
     # Auto-generate output filename if not provided
     if output_file is None:
