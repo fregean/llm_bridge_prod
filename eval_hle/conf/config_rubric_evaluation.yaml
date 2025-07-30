@@ -1,0 +1,35 @@
+defaults:
+  - _self_
+
+# Dataset configuration
+dataset: cais/hle
+
+# Model to evaluate (predictions file will be predictions/hle_{model}.json)
+model: deepseek-reasoner
+
+# Optional: Direct path to predictions file (overrides model-based path)
+predictions_file: null  # e.g., "custom_path/my_predictions.json"
+
+# Judge model for rubric evaluation
+judge: o3-mini-2025-01-31
+
+# API configuration for judge model
+provider: openai
+base_url: https://api.openai.com/v1
+max_tokens: 2048
+max_completion_tokens: 2048
+
+# Evaluation parameters
+num_workers: 5  # Number of concurrent API calls (keep low to avoid rate limits)
+reasoning: false  # Not needed for rubric evaluation
+
+# Optional: Limit evaluation to specific samples for testing
+max_samples: null  # Set to a number to limit evaluations (e.g., 10 for testing)
+
+# Rubric file path (relative to project root)
+rubric_path: utils/evaluation_rubric.yaml
+
+# Output configuration
+output_folder: rubric_evaluated
+save_detailed_results: true
+save_statistics: true

@@ -1,0 +1,36 @@
+-
+  Score: 5
+  Definition (Overall Evaluation): Completely Valid/Accurate
+  Typical Characteristics: |
+    Logical development is consistent, with no factual errors.
+    All premises are clearly stated, leading inevitably to the conclusion.
+    Uncertain points are appropriately qualified.
+  Example (Summary): In a math problem, demonstrates the steps of theorem -> algebraic expansion -> numerical calculation in order to derive the correct answer.
+-
+  Score: 4
+  Definition (Overall Evaluation): Mostly Valid
+  Typical Characteristics: |
+    Minor leaps in logic or ambiguous expressions exist, but they are not critical.
+    Minor omissions of fact or errors in peripheral information.
+  Example (Summary): In a history problem, omits some dates but correctly explains character relationships and causality to arrive at the correct answer.
+-
+  Score: 3
+  Definition (Overall Evaluation): Partially Valid
+  Typical Characteristics: |
+    Gaps in the logical path require the reader to fill them in.
+    Some factual errors exist but have a minor impact on the conclusion.
+  Example (Summary): In a physics problem, the choice of formula is correct, but the intermediate calculations are sloppy, and the result is barely correct.
+-
+  Score: 2
+  Definition (Overall Evaluation): Lacking in Validity
+  Typical Characteristics: |
+    Logical leaps are conspicuous, and the basis is ambiguous.
+    Contains factual errors or contradictions.
+  Example (Summary): For an ethics question, confuses term definitions and provides an incorrect answer with an incoherent argument.
+-
+  Score: 1
+  Definition (Overall Evaluation): Inappropriate/Irrelevant
+  Typical Characteristics: |
+    Reasoning is incoherent or irrelevant to the gist of the question.
+    There is virtually no evidence to support the answer.
+  Example (Summary): In a math problem, states "I intuitively think this" without showing any formulas and gives an incorrect answer.
