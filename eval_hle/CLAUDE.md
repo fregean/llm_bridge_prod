@@ -520,21 +520,32 @@ num_workers: 3
 評価結果は`leaderboard/`内のタイムスタンプ付きフォルダに保存され、リーダーボード統合用の標準形式で出力されます。
 
 <details>
-<summary><strong>JSONL→CSV変換ツール（オプション）</strong></summary>
+<summary><strong>JSON/JSONL→CSV変換ツール（オプション）</strong></summary>
 <div>
 
-`convert_jsonl_to_csv.py`スクリプトを使用して、results.jsonlファイルをCSV形式に変換できます。
+`convert_json_to_csv.py`スクリプトを使用して、JSON、JSONL、ルーブリック評価ファイルをCSV形式に変換できます。
+
+**対応形式:**
+- **JSONL**: 1行1JSONオブジェクト（results.jsonlなど）
+- **JSON**: 配列形式またはネストオブジェクト
+- **ルーブリック評価**: rubric_evaluated/rubric_hle_*.json形式
 
 **使用方法:**
 ```bash
-# 基本使用法（出力ファイル名は自動生成: results.jsonl → results.csv）
-python convert_jsonl_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl
+# JSONL形式（基本使用法: results.jsonl → results.csv）
+python convert_json_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl
+
+# JSON配列形式
+python convert_json_to_csv.py data/sample_data.json
+
+# ルーブリック評価ファイル
+python convert_json_to_csv.py rubric_evaluated/rubric_hle_deepseek-r1.json
 
 # 出力ファイル名を指定
-python convert_jsonl_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl my_results.csv
+python convert_json_to_csv.py leaderboard/2025_07_28_14_21_28/results.jsonl my_results.csv
 
 # 全フォルダを一括変換
-for folder in leaderboard/*/; do python convert_jsonl_to_csv.py "${folder}results.jsonl"; done
+for folder in leaderboard/*/; do python convert_json_to_csv.py "${folder}results.jsonl"; done
 ```
 
 **変換される項目:**
@@ -542,6 +553,8 @@ for folder in leaderboard/*/; do python convert_jsonl_to_csv.py "${folder}result
 
 **特徴:**
 - UTF-8エンコーディング対応
+- 自動フォーマット検出（JSON/JSONL/ルーブリック評価）
+- ルーブリック評価ファイルの自動フラット化
 - エラーハンドリング（無効なJSON行をスキップ）
 - 進行状況と結果の表示
 
