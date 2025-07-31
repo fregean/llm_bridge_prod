@@ -61,7 +61,7 @@ async def attempt_question(args, question):
         response = await client.chat.completions.create(
             model=args.model,
             n=args.n_samples,
-            temperature=args.temperature #if "o1" not in args.model else None,
+            temperature=args.temperature, #if "o1" not in args.model else None,
             max_tokens=args.max_tokens,
             top_p=args.top_p,
             messages=messages,
